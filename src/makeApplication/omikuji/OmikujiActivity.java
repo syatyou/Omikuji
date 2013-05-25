@@ -1,10 +1,17 @@
 package makeApplication.omikuji;
 
+import java.util.List;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,7 +23,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class OmikujiActivity extends Activity {
+public class OmikujiActivity extends Activity implements SensorEventListener {
+	
+	private Vibrator vibrator;
+	private SensorManager manager;
 	
 	// ‚¨‚Ý‚­‚¶’I‚Ì”z—ñ
 	private OmikujiParts[] omikujiShelf = new OmikujiParts[20];
@@ -27,6 +37,9 @@ public class OmikujiActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.omikuji);
+        
+        this.vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+        this.manager = (SensorManager)getSystemService(SENSOR_SERVICE);
         
         SharedPreferences pref =
         		PreferenceManager.getDefaultSharedPreferences(this);
@@ -126,6 +139,13 @@ public class OmikujiActivity extends Activity {
 		// TODO Auto-generated method stub
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			if (0 < this.omikujibox.getNumber()) {
+				
+				SharedPreferences pref =
+						PreferenceManager.getDefaultSharedPreferences(this);
+				if (pref.getBoolean("vibration", true)) {
+					this.vibrator.vibrate(200);
+				}
+				
 				this.drawResult();
 			}
 		}
@@ -161,6 +181,48 @@ public class OmikujiActivity extends Activity {
 			startActivity(intent);
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		this.manager.unregisterListener(this);
+	}
+
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+		
+		List<Sensor> sensors = this.manager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+		if (0 < sensors.size()) {
+			this.manager.registerListener(this, sensors.get(0), SensorManager.SENSOR_DELAY_NORMAL);
+		}
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		// TODO Auto-generated method stub
+		if (this.omikujibox.chkShake(event)) {
+			if (this.omikujibox.getNumber() < 0) {
+				this.omikujibox.shake();
+			}
+		}
+		
+	/*
+		float value = event.values[0];
+		if (7 < value) {
+			Toast toast = Toast.makeText(this, "‰Á‘¬“x" + value, Toast.LENGTH_LONG);
+			              toast.show();
+		}
+	*/
 	}
 
 }

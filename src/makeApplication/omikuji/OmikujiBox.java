@@ -2,6 +2,7 @@ package makeApplication.omikuji;
 
 import java.util.Random;
 
+import android.hardware.SensorEvent;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationSet;
@@ -10,6 +11,10 @@ import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 
 public class OmikujiBox implements AnimationListener {
+	
+	private long beforeTime = System.currentTimeMillis();
+	private float beforeValue;
+	
 	private int number; // Ç≠Ç∂î‘çÜ
 	private ImageView imageView;
 
@@ -23,6 +28,27 @@ public class OmikujiBox implements AnimationListener {
 	public OmikujiBox() {
 		// TODO Auto-generated constructor stub
 		this.number = -1;
+	}
+	public boolean chkShake(SensorEvent event) {
+		
+		long now_time = System.currentTimeMillis();
+		long diff_time = now_time - this.beforeTime;
+		float now_value = event.values[0] + event.values[1];
+		
+		if (1500 < diff_time) {
+			
+			
+			float speed = Math.abs(now_value - this.beforeValue) / diff_time * 10000;
+			
+			this.beforeTime = now_time;
+			this.beforeValue = now_value;
+			
+			
+			if (50 < speed) {
+				return true;
+			}
+		}
+		return false;
 	}
 	public void shake() {
 		TranslateAnimation translate = new TranslateAnimation(0, 0, 0, -100);
